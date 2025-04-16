@@ -13,7 +13,7 @@ use Tourze\ProxyProtocol\Enum\Version;
  *
  * @see https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt 第2节
  */
-class V1Header
+class V1Header implements HeaderInterface
 {
     /**
      * @var string 协议族，例如"TCP4"或"TCP6"
@@ -53,6 +53,26 @@ class V1Header
     public function setVersion(Version $version): void
     {
         $this->version = $version;
+    }
+
+    /**
+     * 获取源 IP 地址
+     *
+     * @return string|null 源 IP 地址
+     */
+    public function getSourceIp(): ?string
+    {
+        return $this->sourceAddress?->ip;
+    }
+
+    /**
+     * 获取源端口
+     *
+     * @return int|null 源端口
+     */
+    public function getSourcePort(): ?int
+    {
+        return $this->sourceAddress?->port;
     }
 
     /**

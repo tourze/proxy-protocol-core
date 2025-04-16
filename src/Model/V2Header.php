@@ -16,7 +16,7 @@ use UnexpectedValueException;
  *
  * @see https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt 2.2节
  */
-class V2Header
+class V2Header implements HeaderInterface
 {
     /**
      * 协议签名数据，固定为 12 字节
@@ -113,6 +113,16 @@ class V2Header
     }
 
     /**
+     * 获取源 IP 地址
+     *
+     * @return string|null 源 IP 地址
+     */
+    public function getSourceIp(): ?string
+    {
+        return $this->sourceAddress;
+    }
+
+    /**
      * 获取命令类型
      *
      * @return Command 命令类型
@@ -155,13 +165,27 @@ class V2Header
     }
 
     /**
-     * 获取源地址
+     * 获取原始源地址
      *
      * @return string|null 源地址
      */
-    public function getSourceAddress(): ?string
+    public function getRawSourceAddress(): ?string
     {
         return $this->sourceAddress;
+    }
+
+    /**
+     * 获取源地址
+     *
+     * @return Address|null 源地址对象
+     */
+    public function getSourceAddress(): ?Address
+    {
+        if ($this->sourceAddress === null || $this->sourcePort === null) {
+            return null;
+        }
+
+        return new Address($this->sourceAddress, $this->sourcePort);
     }
 
     /**
@@ -176,13 +200,27 @@ class V2Header
     }
 
     /**
-     * 获取目标地址
+     * 获取原始目标地址
      *
      * @return string|null 目标地址
      */
-    public function getTargetAddress(): ?string
+    public function getRawTargetAddress(): ?string
     {
         return $this->targetAddress;
+    }
+
+    /**
+     * 获取目标地址
+     *
+     * @return Address|null 目标地址对象
+     */
+    public function getTargetAddress(): ?Address
+    {
+        if ($this->targetAddress === null || $this->targetPort === null) {
+            return null;
+        }
+
+        return new Address($this->targetAddress, $this->targetPort);
     }
 
     /**

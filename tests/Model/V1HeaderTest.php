@@ -5,6 +5,7 @@ namespace Tourze\ProxyProtocol\Tests\Model;
 use PHPUnit\Framework\TestCase;
 use Tourze\ProxyProtocol\Enum\Version;
 use Tourze\ProxyProtocol\Model\Address;
+use Tourze\ProxyProtocol\Model\HeaderInterface;
 use Tourze\ProxyProtocol\Model\V1Header;
 
 class V1HeaderTest extends TestCase
@@ -21,6 +22,8 @@ class V1HeaderTest extends TestCase
         $this->assertEquals(Version::V1, $this->header->getVersion());
         $this->assertNull($this->header->getSourceAddress());
         $this->assertNull($this->header->getTargetAddress());
+        $this->assertNull($this->header->getSourceIp());
+        $this->assertNull($this->header->getSourcePort());
     }
 
     public function testVersionGetterSetter(): void
@@ -63,6 +66,29 @@ class V1HeaderTest extends TestCase
         $this->assertNull($this->header->getTargetAddress());
     }
 
+    public function testSourceIpGetter(): void
+    {
+        $this->assertNull($this->header->getSourceIp());
+
+        $address = new Address('192.168.1.1', 8080);
+        $this->header->setSourceAddress($address);
+        $this->assertEquals('192.168.1.1', $this->header->getSourceIp());
+    }
+
+    public function testSourcePortGetter(): void
+    {
+        $this->assertNull($this->header->getSourcePort());
+
+        $address = new Address('192.168.1.1', 8080);
+        $this->header->setSourceAddress($address);
+        $this->assertEquals(8080, $this->header->getSourcePort());
+    }
+
+    public function testHeaderInterface(): void
+    {
+        $this->assertInstanceOf(HeaderInterface::class, $this->header);
+    }
+
     public function testCompleteHeader(): void
     {
         // 设置完整的头部信息
@@ -78,5 +104,9 @@ class V1HeaderTest extends TestCase
         $this->assertEquals(12345, $this->header->getSourceAddress()->port);
         $this->assertEquals('10.0.0.2', $this->header->getTargetAddress()->ip);
         $this->assertEquals(443, $this->header->getTargetAddress()->port);
+
+        // 验证接口方法
+        $this->assertEquals('10.0.0.1', $this->header->getSourceIp());
+        $this->assertEquals(12345, $this->header->getSourcePort());
     }
 }
