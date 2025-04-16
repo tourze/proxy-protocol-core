@@ -409,11 +409,11 @@ class V2Header
      * @param string $targetAddress 目标地址
      * @param int $targetPort 目标端口
      * @param Version $version 协议版本
-     * @return static 创建的头部对象
+     * @return self 创建的头部对象
      */
-    public static function createForward4(string $sourceAddress, int $sourcePort, string $targetAddress, int $targetPort, Version $version = Version::V2): static
+    public static function createForward4(string $sourceAddress, int $sourcePort, string $targetAddress, int $targetPort, Version $version = Version::V2): self
     {
-        $result = new static();
+        $result = new self();
         $result->setVersion($version);
         $result->setSourceAddress($sourceAddress);
         $result->setTargetPort($targetPort);
@@ -437,12 +437,10 @@ class V2Header
             return null;
         }
 
-        if (isset($result)) {
-            $constructed = $result->constructProxyHeader();
-            if (strncmp($constructed, $data, strlen($constructed)) === 0) {
-                $data = substr($data, strlen($constructed));
-                return $result;
-            }
+        $constructed = $result->constructProxyHeader();
+        if (strncmp($constructed, $data, strlen($constructed)) === 0) {
+            $data = substr($data, strlen($constructed));
+            return $result;
         }
 
         return null;
@@ -486,7 +484,7 @@ class V2Header
         $targetPort = unpack('n', substr($data, $pos + 2, 2))[1];
 
         // 创建并填充头部对象
-        $result = new static();
+        $result = new self();
         $result->setVersion(Version::from($versionValue));
         $result->setCommand(Command::from($commandValue));
 

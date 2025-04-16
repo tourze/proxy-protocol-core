@@ -22,10 +22,10 @@ class Address
      *
      * @param string $ip IP地址
      * @param int $port 端口号
-     * @return static
+     * @return self
      */
-    public static function create(string $ip, int $port): static
+    public static function create(string $ip, int $port): self
     {
-        return new static($ip, $port);
+        return new self($ip, $port);
     }
 }
