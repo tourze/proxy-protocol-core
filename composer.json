@@ -1,0 +1,26 @@
+{
+  "name": "tourze/proxy-protocol-core",
+  "description": "ProxyProtocol核心定义",
+  "type": "library",
+  "require": {
+    "php": "^8.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.0",
+    "phpstan/phpstan": "^2.1"
+  },
+  "scripts": {
+    "phpstan": "phpstan analyse src -l 1"
+  },
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Tourze\\ProxyProtocol\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tourze\\ProxyProtocol\\Tests\\": "tests/"
+    }
+  }
+}

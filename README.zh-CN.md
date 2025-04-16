@@ -1,32 +1,30 @@
 # Proxy Protocol Core
 
-[English](README.md) | [中文](README.zh-CN.md)
+这是一个用于解析和生成代理协议（Proxy Protocol）的 PHP 核心库。支持代理协议的 V1 和 V2 版本的基本数据结构和解析功能。
 
-A PHP core library for parsing and generating Proxy Protocol. Supports both V1 (text format) and V2 (binary format) versions of the protocol with basic data structures and parsing capabilities.
+## 功能特性
 
-## Features
+- 支持代理协议 V1（文本格式）和 V2（二进制格式）
+- 提供枚举类型以便更安全的使用协议常量
+- 完整的类型提示和详细注释
+- 符合 PSR 标准
 
-- Support for Proxy Protocol V1 (text format) and V2 (binary format)
-- Enum types for safer protocol constant usage
-- Complete type hints and detailed documentation
-- PSR standard compliant
-
-## Installation
+## 安装
 
 ```bash
 composer require tourze/proxy-protocol-core
 ```
 
-## Usage
+## 使用方法
 
-### Proxy Protocol V1
+### 代理协议 V1
 
 ```php
 use Tourze\ProxyProtocol\Enum\Version;
 use Tourze\ProxyProtocol\Model\Address;
 use Tourze\ProxyProtocol\Model\V1Header;
 
-// Create a V1 header
+// 创建一个 V1 头部
 $header = new V1Header();
 $header->setVersion(Version::V1);
 $header->setProtocol('TCP4');
@@ -34,7 +32,7 @@ $header->setSourceAddress(new Address('192.168.1.1', 12345));
 $header->setTargetAddress(new Address('192.168.1.2', 80));
 ```
 
-### Proxy Protocol V2
+### 代理协议 V2
 
 ```php
 use Tourze\ProxyProtocol\Enum\AddressFamily;
@@ -42,7 +40,7 @@ use Tourze\ProxyProtocol\Enum\Command;
 use Tourze\ProxyProtocol\Enum\Version;
 use Tourze\ProxyProtocol\Model\V2Header;
 
-// Create a V2 header
+// 创建一个 V2 头部
 $header = new V2Header();
 $header->setVersion(Version::V2);
 $header->setCommand(Command::PROXY);
@@ -52,11 +50,11 @@ $header->setSourcePort(12345);
 $header->setTargetAddress('192.168.1.2');
 $header->setTargetPort(80);
 
-// Parse a V2 header
-$data = "..."; // Binary data containing Proxy Protocol V2 header
+// 解析一个 V2 头部
+$data = "..."; // 包含 Proxy Protocol V2 头部的二进制数据
 $header = V2Header::parseHeader($data);
 ```
 
-## References
+## 参考资料
 
-- [Proxy Protocol Specification](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt)
+- [Proxy Protocol 规范](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt)
