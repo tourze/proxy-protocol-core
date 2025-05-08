@@ -2,6 +2,7 @@
   "name": "tourze/proxy-protocol-core",
   "description": "ProxyProtocol核心定义",
   "type": "library",
+  "license": "MIT",
   "require": {
     "php": "^8.1"
   },
@@ -9,7 +10,6 @@
     "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^10.0"
   },
-  "license": "MIT",
   "autoload": {
     "psr-4": {
       "Tourze\\ProxyProtocol\\": "src/"
