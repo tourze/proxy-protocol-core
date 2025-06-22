@@ -31,7 +31,7 @@ class V2Header implements HeaderInterface
     /**
      * 不同地址族和传输协议的二进制格式长度
      *
-     * @var array<string, int> 各种协议的数据长度映射
+     * @var array<int|string, int> 各种协议的数据长度映射
      */
     protected static array $lengths = [
         "\x11" => 12, // TCP4
@@ -464,9 +464,9 @@ class V2Header implements HeaderInterface
      * 解析协议头部数据
      *
      * @param string $data 引用传递的数据，解析后会移除头部部分
-     * @return static|null 解析出的头部对象，或者在解析失败时返回null
+     * @return self|null 解析出的头部对象，或者在解析失败时返回null
      */
-    public static function parseHeader(string &$data): ?static
+    public static function parseHeader(string &$data): ?self
     {
         // 匹配代理协议签名
         if (strncmp($data, self::SIG_DATA, strlen(self::SIG_DATA)) === 0) {
@@ -488,9 +488,9 @@ class V2Header implements HeaderInterface
      * 解析V2版本的协议头部
      *
      * @param string $data 数据
-     * @return static 解析出的头部对象
+     * @return self 解析出的头部对象
      */
-    protected static function parseVersion2(string $data): static
+    protected static function parseVersion2(string $data): self
     {
         // 第13字节，高4位是版本，低4位是命令
         $versionValue = ord($data[12]) >> 4;

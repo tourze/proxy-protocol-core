@@ -2,6 +2,12 @@
 
 namespace Tourze\ProxyProtocol\Enum;
 
+use Tourze\EnumExtra\Itemable;
+use Tourze\EnumExtra\ItemTrait;
+use Tourze\EnumExtra\Labelable;
+use Tourze\EnumExtra\Selectable;
+use Tourze\EnumExtra\SelectTrait;
+
 /**
  * 地址族（Address Family）和传输协议（Transport Protocol）组合枚举
  *
@@ -10,8 +16,10 @@ namespace Tourze\ProxyProtocol\Enum;
  *
  * @see https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt 2.2节
  */
-enum AddressFamily: string
+enum AddressFamily: string implements Itemable, Labelable, Selectable
 {
+    use ItemTrait;
+    use SelectTrait;
     /**
      * 未指定协议
      */
@@ -46,4 +54,17 @@ enum AddressFamily: string
      * Unix SOCK_DGRAM (AF_UNIX, SOCK_DGRAM)
      */
     case UNIX_DGRAM = "\x32";
+
+    public function getLabel(): string
+    {
+        return match ($this) {
+            self::UNSPECIFIED => '未指定协议',
+            self::TCP4 => 'IPv4 over TCP',
+            self::UDP4 => 'IPv4 over UDP',
+            self::TCP6 => 'IPv6 over TCP',
+            self::UDP6 => 'IPv6 over UDP',
+            self::UNIX_STREAM => 'Unix SOCK_STREAM',
+            self::UNIX_DGRAM => 'Unix SOCK_DGRAM',
+        };
+    }
 }
