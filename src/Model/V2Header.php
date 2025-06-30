@@ -2,12 +2,12 @@
 
 namespace Tourze\ProxyProtocol\Model;
 
-use Exception;
 use ReflectionClass;
 use Tourze\ProxyProtocol\Enum\AddressFamily;
 use Tourze\ProxyProtocol\Enum\Command;
 use Tourze\ProxyProtocol\Enum\Version;
-use UnexpectedValueException;
+use Tourze\ProxyProtocol\Exception\InvalidProtocolException;
+use Tourze\ProxyProtocol\Exception\UnsupportedProtocolException;
 
 /**
  * 代理协议V2版本的头部信息
@@ -326,7 +326,8 @@ class V2Header implements HeaderInterface
      * @param string $address IP地址
      * @param AddressFamily $addressFamily 地址族
      * @return string 编码后的地址数据
-     * @throws Exception 在不支持的地址族或其他错误情况下抛出
+     * @throws UnsupportedProtocolException 在不支持的地址族时抛出
+     * @throws InvalidProtocolException 在协议无效时抛出
      */
     protected function encodeAddress(string $address, AddressFamily $addressFamily): string
     {
@@ -336,8 +337,8 @@ class V2Header implements HeaderInterface
 
         return match ($addressFamily) {
             AddressFamily::TCP4, AddressFamily::UDP4, AddressFamily::TCP6, AddressFamily::UDP6 => inet_pton($address),
-            AddressFamily::UNIX_STREAM, AddressFamily::UNIX_DGRAM => throw new Exception("Unix socket not (yet) supported."),
-            default => throw new UnexpectedValueException("Invalid protocol."),
+            AddressFamily::UNIX_STREAM, AddressFamily::UNIX_DGRAM => throw new UnsupportedProtocolException("Unix socket not (yet) supported."),
+            default => throw new InvalidProtocolException("Invalid protocol."),
         };
     }
 
@@ -348,7 +349,8 @@ class V2Header implements HeaderInterface
      * @param string $address 编码后的地址数据
      * @param string $protocol 地址族和传输协议
      * @return string 解码后的IP地址
-     * @throws Exception 在不支持的地址族或其他错误情况下抛出
+     * @throws UnsupportedProtocolException 在不支持的地址族时抛出
+     * @throws InvalidProtocolException 在协议无效时抛出
      */
     protected static function decodeAddress(Version $version, string $address, string $protocol): string
     {
@@ -358,8 +360,8 @@ class V2Header implements HeaderInterface
 
         return match ($protocol) {
             "\x11", "\x12", "\x21", "\x22" => inet_ntop($address), // TCP4, UDP4, TCP6, UDP6
-            "\x31", "\x32" => throw new Exception("Unix socket not (yet) supported."), // UNIX_STREAM, UNIX_DGRAM
-            default => throw new UnexpectedValueException("Invalid protocol."),
+            "\x31", "\x32" => throw new UnsupportedProtocolException("Unix socket not (yet) supported."), // UNIX_STREAM, UNIX_DGRAM
+            default => throw new InvalidProtocolException("Invalid protocol."),
         };
     }
 
@@ -367,7 +369,7 @@ class V2Header implements HeaderInterface
      * 获取源地址和目标地址的编码数据
      *
      * @return string 编码后的地址数据
-     * @throws Exception 在地址编码失败时抛出
+     * @throws UnsupportedProtocolException 在地址编码失败时抛出
      */
     protected function getAddresses(): string
     {
@@ -381,7 +383,8 @@ class V2Header implements HeaderInterface
      * @param int $port 端口号
      * @param AddressFamily $addressFamily 地址族
      * @return string 编码后的端口数据
-     * @throws Exception 在不支持的地址族或其他错误情况下抛出
+     * @throws UnsupportedProtocolException 在不支持的地址族时抛出
+     * @throws InvalidProtocolException 在协议无效时抛出
      */
     protected function encodePort(int $port, AddressFamily $addressFamily): string
     {
@@ -391,8 +394,8 @@ class V2Header implements HeaderInterface
 
         return match ($addressFamily) {
             AddressFamily::TCP4, AddressFamily::UDP4, AddressFamily::TCP6, AddressFamily::UDP6 => pack('n', $port),
-            AddressFamily::UNIX_STREAM, AddressFamily::UNIX_DGRAM => throw new Exception("Unix socket not (yet) supported."),
-            default => throw new UnexpectedValueException("Invalid protocol."),
+            AddressFamily::UNIX_STREAM, AddressFamily::UNIX_DGRAM => throw new UnsupportedProtocolException("Unix socket not (yet) supported."),
+            default => throw new InvalidProtocolException("Invalid protocol."),
         };
     }
 
@@ -400,7 +403,7 @@ class V2Header implements HeaderInterface
      * 获取源端口和目标端口的编码数据
      *
      * @return string 编码后的端口数据
-     * @throws Exception 在端口编码失败时抛出
+     * @throws UnsupportedProtocolException 在端口编码失败时抛出
      */
     protected function getPorts(): string
     {
