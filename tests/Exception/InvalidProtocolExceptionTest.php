@@ -1,18 +1,22 @@
 <?php
 
-namespace Tourze\ProxyProtocol\Tests\Unit\Exception;
+namespace Tourze\ProxyProtocol\Tests\Exception;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitBase\AbstractExceptionTestCase;
 use Tourze\ProxyProtocol\Exception\InvalidProtocolException;
-use UnexpectedValueException;
 
-class InvalidProtocolExceptionTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(InvalidProtocolException::class)]
+final class InvalidProtocolExceptionTest extends AbstractExceptionTestCase
 {
     public function testInvalidProtocolExceptionIsInstanceOfUnexpectedValueException(): void
     {
         $exception = new InvalidProtocolException('Invalid protocol');
-        
-        $this->assertInstanceOf(UnexpectedValueException::class, $exception);
+
+        $this->assertInstanceOf(\UnexpectedValueException::class, $exception);
         $this->assertSame('Invalid protocol', $exception->getMessage());
     }
 
@@ -20,7 +24,7 @@ class InvalidProtocolExceptionTest extends TestCase
     {
         $message = 'Custom invalid protocol message';
         $exception = new InvalidProtocolException($message);
-        
+
         $this->assertSame($message, $exception->getMessage());
     }
 
@@ -29,9 +33,9 @@ class InvalidProtocolExceptionTest extends TestCase
         $code = 100;
         $previous = new \Exception('Previous exception');
         $message = 'Protocol validation failed';
-        
+
         $exception = new InvalidProtocolException($message, $code, $previous);
-        
+
         $this->assertSame($message, $exception->getMessage());
         $this->assertSame($code, $exception->getCode());
         $this->assertSame($previous, $exception->getPrevious());

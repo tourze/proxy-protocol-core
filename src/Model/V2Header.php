@@ -2,7 +2,6 @@
 
 namespace Tourze\ProxyProtocol\Model;
 
-use ReflectionClass;
 use Tourze\ProxyProtocol\Enum\AddressFamily;
 use Tourze\ProxyProtocol\Enum\Command;
 use Tourze\ProxyProtocol\Enum\Version;
@@ -105,7 +104,6 @@ class V2Header implements HeaderInterface
      * 设置协议版本
      *
      * @param Version $version 协议版本
-     * @return void
      */
     public function setVersion(Version $version): void
     {
@@ -136,7 +134,6 @@ class V2Header implements HeaderInterface
      * 设置命令类型
      *
      * @param Command $command 命令类型
-     * @return void
      */
     public function setCommand(Command $command): void
     {
@@ -157,7 +154,6 @@ class V2Header implements HeaderInterface
      * 设置地址族和传输协议
      *
      * @param AddressFamily $addressFamily 地址族和传输协议
-     * @return void
      */
     public function setAddressFamily(AddressFamily $addressFamily): void
     {
@@ -181,7 +177,7 @@ class V2Header implements HeaderInterface
      */
     public function getSourceAddress(): ?Address
     {
-        if ($this->sourceAddress === null || $this->sourcePort === null) {
+        if (null === $this->sourceAddress || null === $this->sourcePort) {
             return null;
         }
 
@@ -192,7 +188,6 @@ class V2Header implements HeaderInterface
      * 设置源地址
      *
      * @param string|null $sourceAddress 源地址
-     * @return void
      */
     public function setSourceAddress(?string $sourceAddress): void
     {
@@ -216,7 +211,7 @@ class V2Header implements HeaderInterface
      */
     public function getTargetAddress(): ?Address
     {
-        if ($this->targetAddress === null || $this->targetPort === null) {
+        if (null === $this->targetAddress || null === $this->targetPort) {
             return null;
         }
 
@@ -227,7 +222,6 @@ class V2Header implements HeaderInterface
      * 设置目标地址
      *
      * @param string|null $targetAddress 目标地址
-     * @return void
      */
     public function setTargetAddress(?string $targetAddress): void
     {
@@ -248,7 +242,6 @@ class V2Header implements HeaderInterface
      * 设置源端口
      *
      * @param int|null $sourcePort 源端口
-     * @return void
      */
     public function setSourcePort(?int $sourcePort): void
     {
@@ -269,7 +262,6 @@ class V2Header implements HeaderInterface
      * 设置目标端口
      *
      * @param int|null $targetPort 目标端口
-     * @return void
      */
     public function setTargetPort(?int $targetPort): void
     {
@@ -283,11 +275,20 @@ class V2Header implements HeaderInterface
      */
     protected function getProtocol(): string
     {
-        if ($this->version === Version::V2) {
+        if (Version::V2 === $this->version) {
             return $this->addressFamily->value;
-        } else {
-            return array_flip((new ReflectionClass($this))->getConstants())[$this->addressFamily->value];
         }
+
+        $constants = (new \ReflectionClass($this))->getConstants();
+        /** @var array<string, int> $constants */
+        $flipped = array_flip($constants);
+        $value = $this->addressFamily->value;
+
+        if (!isset($flipped[$value])) {
+            throw new InvalidProtocolException("Unknown address family: {$value}");
+        }
+
+        return $flipped[$value];
     }
 
     /**
@@ -299,7 +300,7 @@ class V2Header implements HeaderInterface
      */
     protected function getVersionCommand(): string
     {
-        if ($this->version === Version::V2) {
+        if (Version::V2 === $this->version) {
             return chr(($this->version->value << 4) + $this->command->value);
         }
 
@@ -313,7 +314,7 @@ class V2Header implements HeaderInterface
      */
     protected function getAddressLength(): string
     {
-        if ($this->version === Version::V2) {
+        if (Version::V2 === $this->version) {
             return pack('n', self::$lengths[$this->addressFamily->value]);
         }
 
@@ -323,79 +324,129 @@ class V2Header implements HeaderInterface
     /**
      * 将IP地址编码为二进制格式
      *
-     * @param string $address IP地址
+     * @param string        $address       IP地址
      * @param AddressFamily $addressFamily 地址族
+     *
      * @return string 编码后的地址数据
+     *
      * @throws UnsupportedProtocolException 在不支持的地址族时抛出
-     * @throws InvalidProtocolException 在协议无效时抛出
+     * @throws InvalidProtocolException     在协议无效时抛出
      */
     protected function encodeAddress(string $address, AddressFamily $addressFamily): string
     {
-        if ($this->version === Version::V1) {
+        if (Version::V1 === $this->version) {
             return $address;
         }
 
         return match ($addressFamily) {
-            AddressFamily::TCP4, AddressFamily::UDP4, AddressFamily::TCP6, AddressFamily::UDP6 => inet_pton($address),
-            AddressFamily::UNIX_STREAM, AddressFamily::UNIX_DGRAM => throw new UnsupportedProtocolException("Unix socket not (yet) supported."),
-            default => throw new InvalidProtocolException("Invalid protocol."),
+            AddressFamily::TCP4, AddressFamily::UDP4, AddressFamily::TCP6, AddressFamily::UDP6 => $this->safeInetPton($address),
+            AddressFamily::UNIX_STREAM, AddressFamily::UNIX_DGRAM => throw new UnsupportedProtocolException('Unix socket not (yet) supported.'),
+            default => throw new InvalidProtocolException('Invalid protocol.'),
         };
+    }
+
+    /**
+     * 安全的 inet_pton 包装器
+     *
+     * @param string $address IP地址字符串
+     *
+     * @return string 编码后的地址数据
+     *
+     * @throws InvalidProtocolException 在地址格式无效时抛出
+     */
+    private function safeInetPton(string $address): string
+    {
+        $result = inet_pton($address);
+        if (false === $result) {
+            throw new InvalidProtocolException("Invalid IP address format: {$address}");
+        }
+
+        return $result;
     }
 
     /**
      * 将二进制格式的地址解码为字符串表示
      *
-     * @param Version $version 协议版本
-     * @param string $address 编码后的地址数据
-     * @param string $protocol 地址族和传输协议
+     * @param Version $version  协议版本
+     * @param string  $address  编码后的地址数据
+     * @param string  $protocol 地址族和传输协议
+     *
      * @return string 解码后的IP地址
+     *
      * @throws UnsupportedProtocolException 在不支持的地址族时抛出
-     * @throws InvalidProtocolException 在协议无效时抛出
+     * @throws InvalidProtocolException     在协议无效时抛出
      */
     protected static function decodeAddress(Version $version, string $address, string $protocol): string
     {
-        if ($version === Version::V1) {
+        if (Version::V1 === $version) {
             return $address;
         }
 
         return match ($protocol) {
-            "\x11", "\x12", "\x21", "\x22" => inet_ntop($address), // TCP4, UDP4, TCP6, UDP6
-            "\x31", "\x32" => throw new UnsupportedProtocolException("Unix socket not (yet) supported."), // UNIX_STREAM, UNIX_DGRAM
-            default => throw new InvalidProtocolException("Invalid protocol."),
+            "\x11", "\x12", "\x21", "\x22" => self::safeInetNtop($address), // TCP4, UDP4, TCP6, UDP6
+            "\x31", "\x32" => throw new UnsupportedProtocolException('Unix socket not (yet) supported.'), // UNIX_STREAM, UNIX_DGRAM
+            default => throw new InvalidProtocolException('Invalid protocol.'),
         };
+    }
+
+    /**
+     * 安全的 inet_ntop 包装器
+     *
+     * @param string $address 二进制格式的地址数据
+     *
+     * @return string 解码后的IP地址字符串
+     *
+     * @throws InvalidProtocolException 在地址格式无效时抛出
+     */
+    private static function safeInetNtop(string $address): string
+    {
+        $result = inet_ntop($address);
+        if (false === $result) {
+            throw new InvalidProtocolException('Invalid binary address format');
+        }
+
+        return $result;
     }
 
     /**
      * 获取源地址和目标地址的编码数据
      *
      * @return string 编码后的地址数据
+     *
      * @throws UnsupportedProtocolException 在地址编码失败时抛出
      */
     protected function getAddresses(): string
     {
-        $separator = $this->version === Version::V1 ? " " : "";
+        if (null === $this->sourceAddress || null === $this->targetAddress) {
+            throw new InvalidProtocolException('Source and target addresses must not be null');
+        }
+
+        $separator = Version::V1 === $this->version ? ' ' : '';
+
         return $this->encodeAddress($this->sourceAddress, $this->addressFamily) . $separator . $this->encodeAddress($this->targetAddress, $this->addressFamily);
     }
 
     /**
      * 将端口编码为二进制格式
      *
-     * @param int $port 端口号
+     * @param int           $port          端口号
      * @param AddressFamily $addressFamily 地址族
+     *
      * @return string 编码后的端口数据
+     *
      * @throws UnsupportedProtocolException 在不支持的地址族时抛出
-     * @throws InvalidProtocolException 在协议无效时抛出
+     * @throws InvalidProtocolException     在协议无效时抛出
      */
     protected function encodePort(int $port, AddressFamily $addressFamily): string
     {
-        if ($this->version === Version::V1) {
-            return (string)$port;
+        if (Version::V1 === $this->version) {
+            return (string) $port;
         }
 
         return match ($addressFamily) {
             AddressFamily::TCP4, AddressFamily::UDP4, AddressFamily::TCP6, AddressFamily::UDP6 => pack('n', $port),
-            AddressFamily::UNIX_STREAM, AddressFamily::UNIX_DGRAM => throw new UnsupportedProtocolException("Unix socket not (yet) supported."),
-            default => throw new InvalidProtocolException("Invalid protocol."),
+            AddressFamily::UNIX_STREAM, AddressFamily::UNIX_DGRAM => throw new UnsupportedProtocolException('Unix socket not (yet) supported.'),
+            default => throw new InvalidProtocolException('Invalid protocol.'),
         };
     }
 
@@ -403,11 +454,17 @@ class V2Header implements HeaderInterface
      * 获取源端口和目标端口的编码数据
      *
      * @return string 编码后的端口数据
+     *
      * @throws UnsupportedProtocolException 在端口编码失败时抛出
      */
     protected function getPorts(): string
     {
-        $separator = $this->version === Version::V1 ? " " : "";
+        if (null === $this->sourcePort || null === $this->targetPort) {
+            throw new InvalidProtocolException('Source and target ports must not be null');
+        }
+
+        $separator = Version::V1 === $this->version ? ' ' : '';
+
         return $this->encodePort($this->sourcePort, $this->addressFamily) . $separator . $this->encodePort($this->targetPort, $this->addressFamily);
     }
 
@@ -418,8 +475,8 @@ class V2Header implements HeaderInterface
      */
     public function constructProxyHeader(): string
     {
-        $separator = $this->version === Version::V1 ? "\x20" : "";
-        $terminator = $this->version === Version::V1 ? "\r\n" : null;
+        $separator = Version::V1 === $this->version ? "\x20" : '';
+        $terminator = Version::V1 === $this->version ? "\r\n" : null;
 
         return implode($separator, array_filter([
             self::SIG_DATA,
@@ -428,8 +485,8 @@ class V2Header implements HeaderInterface
             $this->getAddressLength(),
             $this->getAddresses(),
             $this->getPorts(),
-            $terminator
-        ]));
+            $terminator,
+        ], static fn ($value): bool => null !== $value && '' !== $value));
     }
 
     /**
@@ -445,11 +502,12 @@ class V2Header implements HeaderInterface
     /**
      * 创建一个代理转发头部
      *
-     * @param string $sourceAddress 源地址
-     * @param int $sourcePort 源端口
-     * @param string $targetAddress 目标地址
-     * @param int $targetPort 目标端口
-     * @param Version $version 协议版本
+     * @param string  $sourceAddress 源地址
+     * @param int     $sourcePort    源端口
+     * @param string  $targetAddress 目标地址
+     * @param int     $targetPort    目标端口
+     * @param Version $version       协议版本
+     *
      * @return self 创建的头部对象
      */
     public static function createForward4(string $sourceAddress, int $sourcePort, string $targetAddress, int $targetPort, Version $version = Version::V2): self
@@ -460,37 +518,41 @@ class V2Header implements HeaderInterface
         $result->setTargetPort($targetPort);
         $result->setTargetAddress($targetAddress);
         $result->setSourcePort($sourcePort);
+
         return $result;
     }
 
     /**
      * 解析协议头部数据
      *
-     * @param string $data 引用传递的数据，解析后会移除头部部分
-     * @return self|null 解析出的头部对象，或者在解析失败时返回null
+     * @param string $data 待解析的数据
+     *
+     * @return array{header: self|null, remaining: string} 包含解析出的头部对象和剩余数据的数组
      */
-    public static function parseHeader(string &$data): ?self
+    public static function parseHeader(string $data): array
     {
         // 匹配代理协议签名
-        if (strncmp($data, self::SIG_DATA, strlen(self::SIG_DATA)) === 0) {
+        if (0 === strncmp($data, self::SIG_DATA, strlen(self::SIG_DATA))) {
             $result = self::parseVersion2($data);
         } else {
-            return null;
+            return ['header' => null, 'remaining' => $data];
         }
 
         $constructed = $result->constructProxyHeader();
-        if (strncmp($constructed, $data, strlen($constructed)) === 0) {
-            $data = substr($data, strlen($constructed));
-            return $result;
+        if (0 === strncmp($constructed, $data, strlen($constructed))) {
+            $remaining = substr($data, strlen($constructed));
+
+            return ['header' => $result, 'remaining' => $remaining];
         }
 
-        return null;
+        return ['header' => null, 'remaining' => $data];
     }
 
     /**
      * 解析V2版本的协议头部
      *
      * @param string $data 数据
+     *
      * @return self 解析出的头部对象
      */
     protected static function parseVersion2(string $data): self
@@ -521,8 +583,15 @@ class V2Header implements HeaderInterface
         $pos += self::$lengths[$protocolValue] / 2 - 2;
 
         // 解析端口
-        $sourcePort = unpack('n', substr($data, $pos, 2))[1];
-        $targetPort = unpack('n', substr($data, $pos + 2, 2))[1];
+        $sourcePortData = unpack('n', substr($data, $pos, 2));
+        $targetPortData = unpack('n', substr($data, $pos + 2, 2));
+
+        if (false === $sourcePortData || false === $targetPortData) {
+            throw new InvalidProtocolException('Failed to unpack port data');
+        }
+
+        $sourcePort = $sourcePortData[1];
+        $targetPort = $targetPortData[1];
 
         // 创建并填充头部对象
         $result = new self();
@@ -539,6 +608,10 @@ class V2Header implements HeaderInterface
 
         $result->setSourceAddress($sourceAddress);
         $result->setTargetAddress($targetAddress);
+        if (!is_int($sourcePort) || !is_int($targetPort)) {
+            throw new InvalidProtocolException('Port values must be integers');
+        }
+
         $result->setSourcePort($sourcePort);
         $result->setTargetPort($targetPort);
 

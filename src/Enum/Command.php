@@ -12,9 +12,10 @@ use Tourze\EnumExtra\SelectTrait;
  * 代理协议命令类型枚举
  *
  * @see https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt 2.2节
+ *
+ * @internal
  */
-enum Command: int
- implements Itemable, Labelable, Selectable
+enum Command: int implements Itemable, Labelable, Selectable
 {
     use ItemTrait;
     use SelectTrait;

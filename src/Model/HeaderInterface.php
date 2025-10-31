@@ -13,8 +13,6 @@ interface HeaderInterface
 {
     /**
      * 获取协议版本
-     *
-     * @return Version
      */
     public function getVersion(): Version;
 

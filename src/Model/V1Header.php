@@ -16,9 +16,9 @@ use Tourze\ProxyProtocol\Enum\Version;
 class V1Header implements HeaderInterface
 {
     /**
-     * @var string 协议族，例如"TCP4"或"TCP6"
+     * @var string|null 协议族，例如"TCP4"或"TCP6"
      */
-    private string $protocol;
+    private ?string $protocol = null;
 
     /**
      * @var Version 协议版本
@@ -37,8 +37,6 @@ class V1Header implements HeaderInterface
 
     /**
      * 获取协议版本
-     *
-     * @return Version
      */
     public function getVersion(): Version
     {
@@ -47,8 +45,6 @@ class V1Header implements HeaderInterface
 
     /**
      * 设置协议版本
-     *
-     * @param Version $version
      */
     public function setVersion(Version $version): void
     {
@@ -77,28 +73,22 @@ class V1Header implements HeaderInterface
 
     /**
      * 获取协议族
-     *
-     * @return string
      */
-    public function getProtocol(): string
+    public function getProtocol(): ?string
     {
         return $this->protocol;
     }
 
     /**
      * 设置协议族
-     *
-     * @param string $protocol
      */
-    public function setProtocol(string $protocol): void
+    public function setProtocol(?string $protocol): void
     {
         $this->protocol = $protocol;
     }
 
     /**
      * 获取源地址
-     *
-     * @return Address|null
      */
     public function getSourceAddress(): ?Address
     {
@@ -107,8 +97,6 @@ class V1Header implements HeaderInterface
 
     /**
      * 设置源地址
-     *
-     * @param Address|null $sourceAddress
      */
     public function setSourceAddress(?Address $sourceAddress): void
     {
@@ -117,8 +105,6 @@ class V1Header implements HeaderInterface
 
     /**
      * 获取目标地址
-     *
-     * @return Address|null
      */
     public function getTargetAddress(): ?Address
     {
@@ -127,11 +113,35 @@ class V1Header implements HeaderInterface
 
     /**
      * 设置目标地址
-     *
-     * @param Address|null $targetAddress
      */
     public function setTargetAddress(?Address $targetAddress): void
     {
         $this->targetAddress = $targetAddress;
+    }
+
+    /**
+     * 生成协议字符串
+     *
+     * 格式：PROXY 协议族 源地址 目标地址 源端口 目标端口\r\n
+     * 例：PROXY TCP4 192.168.0.1 192.168.0.11 56324 443\r\n
+     */
+    public function toProtocolString(): string
+    {
+        if (null === $this->protocol) {
+            return '';
+        }
+
+        if (null === $this->sourceAddress || null === $this->targetAddress) {
+            return '';
+        }
+
+        return sprintf(
+            "PROXY %s %s %s %d %d\r\n",
+            $this->protocol,
+            $this->sourceAddress->ip,
+            $this->targetAddress->ip,
+            $this->sourceAddress->port,
+            $this->targetAddress->port
+        );
     }
 }

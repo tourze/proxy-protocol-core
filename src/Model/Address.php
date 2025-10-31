@@ -8,8 +8,8 @@ namespace Tourze\ProxyProtocol\Model;
 class Address
 {
     /**
-     * @param string $ip IP地址
-     * @param int $port 端口号
+     * @param string $ip   IP地址
+     * @param int    $port 端口号
      */
     public function __construct(
         public readonly string $ip,
@@ -20,9 +20,8 @@ class Address
     /**
      * 创建一个地址对象
      *
-     * @param string $ip IP地址
-     * @param int $port 端口号
-     * @return self
+     * @param string $ip   IP地址
+     * @param int    $port 端口号
      */
     public static function create(string $ip, int $port): self
     {

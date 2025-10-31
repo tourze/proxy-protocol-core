@@ -2,6 +2,7 @@
 
 namespace Tourze\ProxyProtocol\Tests\Model;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\ProxyProtocol\Enum\AddressFamily;
 use Tourze\ProxyProtocol\Enum\Command;
@@ -10,12 +11,18 @@ use Tourze\ProxyProtocol\Model\Address;
 use Tourze\ProxyProtocol\Model\HeaderInterface;
 use Tourze\ProxyProtocol\Model\V2Header;
 
-class V2HeaderTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(V2Header::class)]
+final class V2HeaderTest extends TestCase
 {
     private V2Header $header;
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->header = new V2Header();
     }
 
@@ -224,7 +231,7 @@ class V2HeaderTest extends TestCase
         $headerData = $this->header->constructProxyHeader();
 
         // 验证头部开始部分是否正确
-        $this->assertTrue(strpos($headerData, V2Header::SIG_DATA) === 0, 'Header should start with signature');
+        $this->assertSame(0, strpos($headerData, V2Header::SIG_DATA), 'Header should start with signature');
 
         // 验证头部长度，IPv4/TCP头部总长度应该是 16(基本) + 12(IPv4地址和端口) = 28字节
         $this->assertEquals(28, strlen($headerData), 'Header length for TCP4 should be 28 bytes');
@@ -238,7 +245,7 @@ class V2HeaderTest extends TestCase
         $header->setTargetAddress('192.168.1.2');
         $header->setTargetPort(443);
 
-        $this->assertEquals($header->constructProxyHeader(), (string)$header);
+        $this->assertEquals($header->constructProxyHeader(), (string) $header);
     }
 
     public function testParseHeader(): void
@@ -257,10 +264,11 @@ class V2HeaderTest extends TestCase
         $fullData = $headerData . 'some payload data';
 
         // 解析头部
-        $parsedHeader = V2Header::parseHeader($fullData);
+        $parseResult = V2Header::parseHeader($fullData);
 
         // 验证解析结果
-        $this->assertNotNull($parsedHeader, 'Header should be parsed successfully');
+        $this->assertNotNull($parseResult['header'], 'Header should be parsed successfully');
+        $parsedHeader = $parseResult['header'];
         $this->assertEquals('192.168.1.1', $parsedHeader->getRawSourceAddress());
         $this->assertEquals(12345, $parsedHeader->getSourcePort());
         $this->assertEquals('192.168.1.2', $parsedHeader->getRawTargetAddress());
@@ -273,6 +281,6 @@ class V2HeaderTest extends TestCase
         $this->assertEquals(12345, $sourceAddress->port);
 
         // 验证剩余数据
-        $this->assertEquals('some payload data', $fullData);
+        $this->assertEquals('some payload data', $parseResult['remaining']);
     }
 }

@@ -2,41 +2,17 @@
 
 namespace Tourze\ProxyProtocol\Tests\Enum;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Tourze\PHPUnitEnum\AbstractEnumTestCase;
 use Tourze\ProxyProtocol\Enum\AddressFamily;
-use Tourze\ProxyProtocol\Enum\Command;
-use Tourze\ProxyProtocol\Enum\Version;
 
-class EnumTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(AddressFamily::class)]
+final class AddressFamilyTest extends AbstractEnumTestCase
 {
-    public function testVersionEnum(): void
-    {
-        $this->assertSame(1, Version::V1->value);
-        $this->assertSame(2, Version::V2->value);
-
-        // 测试从值创建枚举
-        $this->assertSame(Version::V1, Version::from(1));
-        $this->assertSame(Version::V2, Version::from(2));
-
-        // 测试无效值
-        $this->expectException(\ValueError::class);
-        Version::from(3);
-    }
-
-    public function testCommandEnum(): void
-    {
-        $this->assertSame(0, Command::LOCAL->value);
-        $this->assertSame(1, Command::PROXY->value);
-
-        // 测试从值创建枚举
-        $this->assertSame(Command::LOCAL, Command::from(0));
-        $this->assertSame(Command::PROXY, Command::from(1));
-
-        // 测试无效值
-        $this->expectException(\ValueError::class);
-        Command::from(2);
-    }
-
     public function testAddressFamilyEnum(): void
     {
         $this->assertSame("\x00", AddressFamily::UNSPECIFIED->value);
@@ -58,15 +34,17 @@ class EnumTest extends TestCase
 
     /**
      * 测试特定枚举值创建的特殊情况
-     *
-     * @dataProvider addressFamilyProvider
      */
+    #[DataProvider('addressFamilyProvider')]
     public function testAddressFamilyValues(string $rawValue, AddressFamily $expectedEnum): void
     {
         $this->assertSame($expectedEnum, AddressFamily::from($rawValue));
     }
 
-    public function addressFamilyProvider(): array
+    /**
+     * @return array<string, array<mixed>>
+     */
+    public static function addressFamilyProvider(): array
     {
         return [
             'UNSPECIFIED' => ["\x00", AddressFamily::UNSPECIFIED],
@@ -77,5 +55,27 @@ class EnumTest extends TestCase
             'UNIX_STREAM' => ["\x31", AddressFamily::UNIX_STREAM],
             'UNIX_DGRAM' => ["\x32", AddressFamily::UNIX_DGRAM],
         ];
+    }
+
+    public function testGetLabel(): void
+    {
+        $this->assertSame('未指定协议', AddressFamily::UNSPECIFIED->getLabel());
+        $this->assertSame('IPv4 over TCP', AddressFamily::TCP4->getLabel());
+        $this->assertSame('IPv4 over UDP', AddressFamily::UDP4->getLabel());
+        $this->assertSame('IPv6 over TCP', AddressFamily::TCP6->getLabel());
+        $this->assertSame('IPv6 over UDP', AddressFamily::UDP6->getLabel());
+        $this->assertSame('Unix SOCK_STREAM', AddressFamily::UNIX_STREAM->getLabel());
+        $this->assertSame('Unix SOCK_DGRAM', AddressFamily::UNIX_DGRAM->getLabel());
+    }
+
+    public function testToArray(): void
+    {
+        $result = AddressFamily::TCP4->toArray();
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('value', $result);
+        $this->assertArrayHasKey('label', $result);
+        $this->assertSame("\x11", $result['value']);
+        $this->assertSame('IPv4 over TCP', $result['label']);
     }
 }

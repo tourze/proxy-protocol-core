@@ -13,8 +13,7 @@ use Tourze\EnumExtra\SelectTrait;
  *
  * @see https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt
  */
-enum Version: int
- implements Itemable, Labelable, Selectable
+enum Version: int implements Itemable, Labelable, Selectable
 {
     use ItemTrait;
     use SelectTrait;

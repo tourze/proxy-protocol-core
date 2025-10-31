@@ -2,10 +2,16 @@
 
 namespace Tourze\ProxyProtocol\Tests\Model;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tourze\ProxyProtocol\Model\Address;
 
-class AddressTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(Address::class)]
+final class AddressTest extends TestCase
 {
     public function testConstructor(): void
     {
@@ -30,9 +36,7 @@ class AddressTest extends TestCase
         $this->assertSame($port, $address->port);
     }
 
-    /**
-     * @dataProvider validAddressProvider
-     */
+    #[DataProvider('validAddressProvider')]
     public function testWithValidAddresses(string $ip, int $port): void
     {
         $address = new Address($ip, $port);
@@ -41,7 +45,10 @@ class AddressTest extends TestCase
         $this->assertSame($port, $address->port);
     }
 
-    public function validAddressProvider(): array
+    /**
+     * @return array<string, array<mixed>>
+     */
+    public static function validAddressProvider(): array
     {
         return [
             'IPv4 local' => ['127.0.0.1', 80],
